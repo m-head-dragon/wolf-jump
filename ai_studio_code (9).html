@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>走れ！ちびオオカミ</title>
+
+  <!-- サイトアイコン設定 -->
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #1e272e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", sans-serif;
+      color: #fff;
+      padding: 10px 0;
+    }
+    #game-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* キャンバスコンテナ */
+    #canvas-container {
+      position: relative;
+      width: 100%;
+      background: #5cbbf5;
+      border-radius: 14px 14px 0 0;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #5cbbf5;
+    }
+    /* ボタンエリア */
+    #controls {
+      width: 100%;
+      background: #2f3640;
+      display: flex;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 0 0 14px 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .btn {
+      flex: 1;
+      height: 52px;
+      font-size: 17px;
+      font-weight: 800;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      touch-action: manipulation;
+    }
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+    #btn-jump { background: linear-gradient(to bottom, #ff9f43, #ee5253); }
+    #btn-dive { background: linear-gradient(to bottom, #54a0ff, #2e86de); }
+
+    /* ランキング */
+    #ranking-section {
+      width: 100%;
+      margin-top: 15px;
+      background: #2f3640;
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+    #ranking-section h3 {
+      font-size: 15px;
+      color: #fbc531;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    #ranking-list-container {
+      max-height: 180px;
+      overflow-y: auto;
+      border-radius: 8px;
+      background: #1e272e;
+      padding: 6px 10px;
+      padding-bottom: 72px; /* 2行分空き */
+      -webkit-overflow-scrolling: touch;
+    }
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 4px;
+      border-bottom: 1px solid #353b48;
+      font-size: 14px;
+    }
+    .ranking-item.top1 { color: #f1c40f; font-weight: bold; }
+    .ranking-item.top2 { color: #bdc3c7; font-weight: bold; }
+    .ranking-item.top3 { color: #e67e22; font-weight: bold; }
+    .ranking-item.current-player {
+      background: rgba(46, 204, 113, 0.2);
+      border-radius: 4px;
+    }
+    .rank-name {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+    .rank-score {
+      font-weight: 700;
+      color: #ff9f43;
+    }
+
+    /* モーダル */
+    .modal {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 20;
+    }
+    .modal-box {
+      background: #2f3640;
+      padding: 22px 20px;
+      border-radius: 16px;
+      text-align: center;
+      width: 90%;
+      max-width: 320px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .modal-title {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: #fbc531;
+    }
+    .input-name {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 2px solid #718093;
+      background: #1e272e;
+      color: #fff;
+      text-align: center;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .btn-action {
+      width: 100%;
+      padding: 11px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      background: #4cd137;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px #2f9923;
+    }
+    .btn-action:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px #2f9923;
+    }
+    #gameover-modal { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+  <div id="canvas-container">
+    <canvas id="gameCanvas" width="514" height="296"></canvas>
+
+    <!-- 名前入力モーダル -->
+    <div id="name-modal" class="modal">
+      <div class="modal-box">
+        <h2 class="modal-title">🐺 走れ！ちびオオカミ</h2>
+        <p style="font-size: 13px; color: #dcdde1; margin-bottom: 10px;">ランキングに登録する名前</p>
+        <input type="text" id="player-name-input" class="input-name" maxlength="10" value="名無しの狼">
+        <button id="btn-start" class="btn-action">走るのを始める！</button>
+      </div>
+    </div>
+
+    <!-- ゲームオーバーモーダル -->
+    <div id="gameover-modal" class="modal">
+      <div class="modal-box">
+        <h2 style="color: #ff6b6b; font-size: 22px; margin-bottom: 6px;">GAME OVER</h2>
+        <p style="font-size: 15px; margin-bottom: 4px;">獲得スコア: <span id="final-score" style="color:#fbc531; font-weight:bold; font-size: 22px;">0</span> 点</p>
+        <p id="rank-announce" style="font-size: 13px; color: #4cd137; margin-bottom: 14px;">集計中...</p>
+        <button id="btn-restart" class="btn-action">もう一度走る！</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button class="btn" id="btn-jump">⬆ ジャンプ</button>
+    <button class="btn" id="btn-dive">⬇ 急降下</button>
+  </div>
+
+  <div id="ranking-section">
+    <h3>🏆 全国狼ランキング (TOP 10)</h3>
+    <div id="ranking-list-container">
+      <div id="ranking-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // roundRect ポリフィル
+  if (!ctx.roundRect) {
+    ctx.roundRect = function(x, y, w, h, radii) {
+      let r = 0;
+      if (typeof radii === 'number') r = radii;
+      else if (Array.isArray(radii)) r = radii[0] || 0;
+      r = Math.min(r, w / 2, h / 2);
+      this.beginPath();
+      this.moveTo(x + r, y);
+      this.lineTo(x + w - r, y);
+      this.quadraticCurveTo(x + w, y, x + w, y + r);
+      this.lineTo(x + w, y + h - r);
+      this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      this.lineTo(x + r, y + h);
+      this.quadraticCurveTo(x, y + h, x, y + h - r);
+      this.lineTo(x, y + r);
+      this.quadraticCurveTo(x, y, x + r, y);
+      this.closePath();
+      return this;
+    };
+  }
+
+  const nameModal = document.getElementById('name-modal');
+  const playerNameInput = document.getElementById('player-name-input');
+  const btnStart = document.getElementById('btn-start');
+  const goModal = document.getElementById('gameover-modal');
+  const finalScoreSpan = document.getElementById('final-score');
+  const rankAnnounce = document.getElementById('rank-announce');
+  const btnRestart = document.getElementById('btn-restart');
+  const rankingListEl = document.getElementById('ranking-list');
+  const btnJump = document.getElementById('btn-jump');
+  const btnDive = document.getElementById('btn-dive');
+
+  // --- Web Audio API ---
+  let audioCtx = null;
+  function initAudio() {
+    if (!audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {}
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+  }
+
+  let bgmInterval = null;
+  let bgmStep = 0;
+  let currentBgmMode = 'none';
+
+  const NORMAL_MELODY = [
+    261.63, 0, 329.63, 392.00, 440.00, 392.00, 329.63, 0,
+    293.66, 0, 349.23, 440.00, 392.00, 349.23, 293.66, 0,
+    261.63, 0, 329.63, 392.00, 523.25, 440.00, 392.00, 329.63,
+    293.66, 329.63, 349.23, 392.00, 261.63, 0, 0, 0
+  ];
+  const NORMAL_BASS = [
+    130.81, 130.81, 196.00, 196.00, 146.83, 146.83, 196.00, 196.00,
+    130.81, 130.81, 196.00, 196.00, 146.83, 196.00, 130.81, 130.81
+  ];
+  const FEVER_MELODY = [
+    523.25, 659.25, 783.99, 659.25, 880.00, 783.99, 659.25, 523.25,
+    587.33, 698.46, 880.00, 698.46, 987.77, 880.00, 698.46, 587.33,
+    659.25, 783.99, 987.77, 783.99, 1046.50, 987.77, 783.99, 659.25,
+    783.99, 880.00, 987.77, 1046.50, 1174.66, 1046.50, 880.00, 783.99
+  ];
+
+  function startBGM(mode) {
+    if (currentBgmMode === mode) return;
+    stopBGM();
+    currentBgmMode = mode;
+    bgmStep = 0;
+
+    const tempo = mode === 'fever' ? 105 : 135;
+    bgmInterval = setInterval(() => {
+      if (!audioCtx || audioCtx.state === 'suspended') return;
+      const now = audioCtx.currentTime;
+
+      if (mode === 'normal') {
+        const note = NORMAL_MELODY[bgmStep % NORMAL_MELODY.length];
+        if (note > 0) playSynthNote(note, 0.08, 'triangle', 0.09, now);
+        if (bgmStep % 2 === 0) {
+          const bass = NORMAL_BASS[(bgmStep / 2) % NORMAL_BASS.length];
+          playSynthNote(bass, 0.12, 'sine', 0.14, now);
+        }
+      } else if (mode === 'fever') {
+        const note = FEVER_MELODY[bgmStep % FEVER_MELODY.length];
+        if (note > 0) playSynthNote(note, 0.06, 'square', 0.10, now);
+        if (bgmStep % 2 === 0) playSynthNote(160, 0.04, 'triangle', 0.15, now);
+      }
+      bgmStep++;
+    }, tempo);
+  }
+
+  function stopBGM() {
+    if (bgmInterval) {
+      clearInterval(bgmInterval);
+      bgmInterval = null;
+    }
+    currentBgmMode = 'none';
+  }
+
+  function playSynthNote(freq, dur, type, vol, time) {
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, time);
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.linearRampToValueAtTime(0, time + dur);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(time);
+      osc.stop(time + dur);
+    } catch(e) {}
+  }
+
+  function playSound(type) {
+    initAudio();
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'jump') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(700, now + 0.14);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.14);
+        osc.start(now); osc.stop(now + 0.14);
+      } else if (type === 'dive') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.linearRampToValueAtTime(100, now + 0.12);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.12);
+        osc.start(now); osc.stop(now + 0.12);
+      } else if (type === 'meat') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587, now);
+        osc.frequency.setValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.2);
+        osc.start(now); osc.stop(now + 0.2);
+      } else if (type === 'gold_meat') {
+        [880, 1174, 1480].forEach((freq, idx) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'square';
+          o.frequency.setValueAtTime(freq, now + idx * 0.06);
+          g.gain.setValueAtTime(0.1, now + idx * 0.06);
+          g.gain.linearRampToValueAtTime(0, now + idx * 0.06 + 0.18);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(now + idx * 0.06);
+          o.stop(now + idx * 0.06 + 0.18);
+        });
+      } else if (type === 'bone_fever') {
+        [523, 659, 783, 1046].forEach((freq, idx) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(freq, now + idx * 0.08);
+          g.gain.setValueAtTime(0.22, now + idx * 0.08);
+          g.gain.linearRampToValueAtTime(0, now + idx * 0.08 + 0.25);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(now + idx * 0.08);
+          o.stop(now + idx * 0.08 + 0.25);
+        });
+      } else if (type === 'poof') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(40, now + 0.18);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.18);
+        osc.start(now); osc.stop(now + 0.18);
+      } else if (type === 'hit') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.linearRampToValueAtTime(30, now + 0.25);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.25);
+        osc.start(now); osc.stop(now + 0.25);
+      } else if (type === 'fall') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.linearRampToValueAtTime(70, now + 0.45);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.45);
+        osc.start(now); osc.stop(now + 0.45);
+      }
+    } catch(e) {}
+  }
+
+  // --- ランキング管理 ---
+  const DEFAULT_RANKING = [
+    { name: "疾風のグレイ", score: 28 },
+    { name: "遠吠えリーダー", score: 24 },
+    { name: "もふもふ狼", score: 19 },
+    { name: "シベリアの風", score: 15 },
+    { name: "シルバーファング", score: 12 },
+    { name: "お肉ハンター", score: 9 },
+    { name: "森の散歩者", score: 7 },
+    { name: "オオカミくん", score: 5 },
+    { name: "かけだしウルフ", score: 3 },
+    { name: "ねむねむ狼", score: 1 }
+  ];
+
+  function getRanking() {
+    try {
+      const data = localStorage.getItem('wolf_game_ranking');
+      return data ? JSON.parse(data) : DEFAULT_RANKING;
+    } catch (e) {
+      return DEFAULT_RANKING;
+    }
+  }
+
+  function saveRanking(list) {
+    try {
+      localStorage.setItem('wolf_game_ranking', JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  let currentPlayerName = "名無しの狼";
+  try {
+    const savedName = localStorage.getItem('wolf_player_name');
+    if (savedName) currentPlayerName = savedName;
+  } catch(e) {}
+  playerNameInput.value = currentPlayerName;
+
+  function renderRanking(highlightName = null, highlightScore = null) {
+    const list = getRanking();
+    rankingListEl.innerHTML = '';
+    list.slice(0, 10).forEach((entry, idx) => {
+      const item = document.createElement('div');
+      item.className = 'ranking-item';
+      if (idx === 0) item.classList.add('top1');
+      else if (idx === 1) item.classList.add('top2');
+      else if (idx === 2) item.classList.add('top3');
+      if (entry.name === highlightName && entry.score === highlightScore) {
+        item.classList.add('current-player');
+      }
+      item.innerHTML = `
+        <span class="rank-name">${idx + 1}. ${escapeHTML(entry.name)}</span>
+        <span class="rank-score">${entry.score} 点</span>
+      `;
+      rankingListEl.appendChild(item);
+    });
+  }
+
+  function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, tag => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[tag] || tag));
+  }
+
+  // --- 高度・物理定数 ---
+  const GROUND_Y = 232;
+  const LOW_AIR_Y = 106;
+  const HIGH_AIR_Y = 56;
+  const PLATFORM_TOP_Y = 146;
+
+  let isGameOver = false;
+  let isPlaying = false;
+  let totalScore = 0;
+  let meatCount = 0;
+  let speed = 4.0;
+  let frameCount = 0;
+  let nextSpawnDistance = 120;
+  let lastSpawnType = 'none';
+  let consecutiveLogCount = 0;
+
+  let feverTimer = 0;
+  const FEVER_MAX_TIME = 420;
+
+  let groundScroll = 0;
+  let bgHillsScroll = 0;
+  let bgCloudsScroll = 0;
+
+  // 狼オブジェクト
+  const wolf = {
+    x: 65,
+    y: GROUND_Y - 48,
+    prevY: GROUND_Y - 48,
+    w: 68,
+    h: 48,
+    vy: 0,
+    baseJumpVy: -10.5,
+    baseGravity: 0.55,
+    baseDiveVy: 12.5,
+    gravity: 0.55,
+    isGrounded: true,
+    isFallingIntoPit: false,
+    currentPlatform: null,
+    animFrame: 0,
+    reset() {
+      this.x = 65;
+      this.y = GROUND_Y - 48;
+      this.prevY = this.y;
+      this.vy = 0;
+      this.isGrounded = true;
+      this.isFallingIntoPit = false;
+      this.currentPlatform = null;
+      this.animFrame = 0;
+    },
+    jump() {
+      if (this.isFallingIntoPit || isGameOver) return;
+      if (this.isGrounded) {
+        const speedRatio = speed / 4.0;
+        this.vy = this.baseJumpVy * Math.sqrt(speedRatio);
+        this.isGrounded = false;
+        this.currentPlatform = null;
+        playSound('jump');
+      }
+    },
+    dive() {
+      if (this.isFallingIntoPit || isGameOver) return;
+      if (!this.isGrounded) {
+        const speedRatio = speed / 4.0;
+        this.vy = this.baseDiveVy * speedRatio;
+        playSound('dive');
+      }
+    },
+    update() {
+      this.prevY = this.y;
+      const speedRatio = speed / 4.0;
+
+      if (this.isFallingIntoPit) {
+        // 穴落下時も速度に連動して加速
+        this.vy += (this.baseGravity * 1.1) * speedRatio;
+        this.y += this.vy;
+        this.x -= speed * 0.75;
+        if (this.y > canvas.height + 30) {
+          gameOver();
+        }
+        return;
+      }
+
+      // ★修整：通常の落下速度（下降中 vy > 0）もスクロール速度に応じてさらに速く強化！
+      // 上昇時は到達高度をキープし、下降に入った瞬間（vy > 0）はクイックに着地できるよう重力をブースト
+      const fallBoost = this.vy > 0 ? 1.45 : 1.0;
+      this.gravity = this.baseGravity * speedRatio * fallBoost;
+      this.vy += this.gravity;
+      this.y += this.vy;
+      this.animFrame += 0.25;
+
+      const footX = this.x + this.w * 0.55;
+      const footBottom = this.y + this.h;
+      const prevFootBottom = this.prevY + this.h;
+
+      // 1. 足場着地判定
+      let landedOnPlatform = false;
+      if (this.vy >= 0) {
+        for (let p of platforms) {
+          if (footX >= p.x && footX <= p.x + p.w) {
+            if (prevFootBottom <= p.y + 14 && footBottom >= p.y) {
+              this.y = p.y - this.h;
+              this.vy = 0;
+              this.isGrounded = true;
+              this.currentPlatform = p;
+              landedOnPlatform = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (this.isGrounded && this.currentPlatform) {
+        if (footX < this.currentPlatform.x || footX > this.currentPlatform.x + this.currentPlatform.w) {
+          this.isGrounded = false;
+          this.currentPlatform = null;
+        }
+      }
+
+      // 2. 地面・穴判定
+      if (!landedOnPlatform && !this.currentPlatform) {
+        const isOverPit = pits.some(pit => (footX >= pit.x + 22) && (footX <= pit.x + pit.w + 10));
+
+        if (!isOverPit) {
+          if (this.y >= GROUND_Y - this.h) {
+            this.y = GROUND_Y - this.h;
+            this.vy = 0;
+            this.isGrounded = true;
+          }
+        } else {
+          if (this.y >= GROUND_Y - this.h) {
+            this.isGrounded = false;
+            this.isFallingIntoPit = true;
+            this.vy = Math.max(this.vy, 2.5 * speedRatio);
+            playSound('fall');
+          }
+        }
+      }
+    }
+  };
+
+  // エンティティ群
+  let logs = [];
+  let birds = [];
+  let redBirds = [];
+  let platforms = [];
+  let pits = [];
+  let meats = [];
+  let bones = [];
+  let particles = [];
+  let smokePuffs = [];
+
+  // --- スポーン管理 ---
+  function handleSpawning() {
+    nextSpawnDistance -= feverTimer > 0 ? speed * 1.5 : speed;
+
+    if (nextSpawnDistance <= 0) {
+      let rand = Math.random();
+
+      if (lastSpawnType === 'platform') {
+        rand = 0.45;
+      }
+
+      if (lastSpawnType === 'log') {
+        consecutiveLogCount++;
+        if (consecutiveLogCount >= 2 || Math.random() < 0.80) {
+          rand = Math.random() < 0.65 ? 0.20 : 0.85;
+        }
+      } else {
+        consecutiveLogCount = 0;
+      }
+
+      // 1. 穴 (約8%)
+      if (rand < 0.08) {
+        lastSpawnType = 'pit';
+        consecutiveLogCount = 0;
+        const pitW = 75 + Math.random() * 20;
+        pits.push({ x: canvas.width + 20, w: pitW });
+
+        if (Math.random() < 0.7) {
+          spawnMeatOrBone(canvas.width + 20 + pitW / 2, LOW_AIR_Y);
+        }
+        nextSpawnDistance = pitW + 130 + Math.random() * 50;
+
+      // 2. 足場 (約28%)
+      } else if (rand < 0.36) {
+        lastSpawnType = 'platform';
+        consecutiveLogCount = 0;
+        const lineType = Math.floor(Math.random() * 3) + 1;
+        const platW = lineType === 1 ? 75 : (lineType === 2 ? 150 : 230);
+        const platX = canvas.width + 20;
+
+        platforms.push({
+          type: lineType,
+          x: platX,
+          y: PLATFORM_TOP_Y,
+          w: platW,
+          h: 15
+        });
+
+        if (lineType >= 2) {
+          const hasRedBird = Math.random() < 0.20;
+          const birdX = platX + (lineType === 2 ? 122 : 170);
+
+          if (hasRedBird) {
+            redBirds.push({
+              x: birdX,
+              y: PLATFORM_TOP_Y - 18,
+              w: 26,
+              h: 18,
+              breatheAnim: Math.random() * Math.PI
+            });
+            spawnMeatOrBone(birdX + 4, HIGH_AIR_Y);
+          } else {
+            spawnMeatOrBone(birdX, HIGH_AIR_Y);
+          }
+
+          if (Math.random() < 0.55) {
+            spawnMeatOrBone(platX + platW + 36, 110);
+          }
+        }
+
+        if (lineType >= 2 && Math.random() < 0.15) {
+          pits.push({ x: platX + 15, w: platW - 45 });
+        } else if (Math.random() < 0.25) {
+          const logH = 32 + Math.random() * 3;
+          const underLogX = platX + Math.min(platW - 35, 40 + Math.random() * (platW - 65));
+          logs.push({
+            x: underLogX,
+            y: GROUND_Y - logH,
+            w: 24,
+            h: logH
+          });
+        }
+
+        nextSpawnDistance = platW + 140 + Math.random() * 50;
+
+      // 3. 切り株/丸太
+      } else if (rand < 0.76) {
+        lastSpawnType = 'log';
+        const logH = 32 + Math.random() * 3;
+        logs.push({
+          x: canvas.width + 20,
+          y: GROUND_Y - logH,
+          w: 24,
+          h: logH
+        });
+
+        if (Math.random() < 0.6) {
+          spawnMeatOrBone(canvas.width + 32, LOW_AIR_Y);
+        }
+        nextSpawnDistance = 200 + Math.random() * 60;
+
+      // 4. 青い鳥
+      } else {
+        lastSpawnType = 'bird';
+        consecutiveLogCount = 0;
+        const birdX = canvas.width + 20;
+        birds.push({
+          x: birdX,
+          y: LOW_AIR_Y - 8,
+          w: 32,
+          h: 22,
+          wingAnim: 0
+        });
+
+        if (Math.random() < 0.7) {
+          spawnMeatOrBone(birdX + 16, GROUND_Y - 26);
+        }
+        nextSpawnDistance = 180 + Math.random() * 50;
+      }
+    }
+  }
+
+  function spawnMeatOrBone(x, y) {
+    if (feverTimer <= 0 && Math.random() < 0.08) {
+      spawnBone(x, y);
+    } else {
+      const isGold = Math.random() < 0.10;
+      spawnMeat(x, y, isGold, false);
+    }
+  }
+
+  function spawnMeat(x, y, forceGold = false, isPoofSpawn = false) {
+    for (let m of meats) {
+      if (Math.abs(m.x - x) < 38) return;
+    }
+
+    if (y < 150) {
+      const birdOverlap = birds.some(b => Math.abs(b.x - x) < 70);
+      if (birdOverlap) return;
+    }
+
+    meats.push({
+      x, y,
+      baseY: y,
+      w: 22,
+      h: 18,
+      isGold: forceGold,
+      bobOffset: Math.random() * Math.PI * 2
+    });
+
+    if (isPoofSpawn) {
+      addSmokePuff(x, y);
+      playSound('poof');
+    }
+  }
+
+  function spawnBone(x, y) {
+    for (let b of bones) {
+      if (Math.abs(b.x - x) < 50) return;
+    }
+    if (y < 150 && birds.some(bird => Math.abs(bird.x - x) < 70)) return;
+
+    bones.push({
+      x, y,
+      baseY: y,
+      w: 26,
+      h: 14,
+      bobOffset: Math.random() * Math.PI * 2
+    });
+  }
+
+  function triggerFeverBurst() {
+    let spawnedCount = 0;
+
+    for (let p of platforms) {
+      if (p.x > 140 && p.x + p.w < canvas.width + 20 && p.type >= 2) {
+        const safeX = p.x + (p.type === 2 ? 110 : 135);
+        if (!meats.some(m => Math.abs(m.x - safeX) < 40)) {
+          const isGold = Math.random() < 0.10;
+          spawnMeat(safeX, HIGH_AIR_Y, isGold, true);
+          spawnedCount++;
+        }
+        const leapX = p.x + p.w + 36;
+        if (leapX < canvas.width - 20 && !meats.some(m => Math.abs(m.x - leapX) < 40)) {
+          const isGold = Math.random() < 0.10;
+          spawnMeat(leapX, 110, isGold, true);
+          spawnedCount++;
+        }
+      }
+      if (spawnedCount >= 3) break;
+    }
+
+    for (let attempt = 0; attempt < 20 && spawnedCount < 3; attempt++) {
+      const candX = 180 + Math.random() * 260;
+      const isLowAir = Math.random() < 0.5;
+      const candY = isLowAir ? LOW_AIR_Y : (GROUND_Y - 26);
+
+      const collidesLog = logs.some(l => Math.abs(l.x - candX) < 50 && candY > 150);
+      const collidesBird = birds.some(b => Math.abs(b.x - candX) < 75 && (candY < 150 || Math.abs(b.y - candY) < 30));
+      const collidesRedBird = redBirds.some(rb => Math.abs(rb.x - candX) < 50);
+      const overPit = pits.some(p => candX >= p.x - 15 && candX <= p.x + p.w + 15 && candY > 150);
+      const nearMeat = meats.some(m => Math.abs(m.x - candX) < 40);
+
+      if (!collidesLog && !collidesBird && !collidesRedBird && !overPit && !nearMeat) {
+        const isGold = Math.random() < 0.10;
+        spawnMeat(candX, candY, isGold, true);
+        spawnedCount++;
+      }
+    }
+  }
+
+  function addSparks(x, y, isGold) {
+    const count = isGold ? 12 : 6;
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * (isGold ? 7 : 5),
+        vy: (Math.random() - 0.5) * (isGold ? 7 : 5),
+        alpha: 1,
+        color: isGold ? (Math.random() < 0.5 ? '#fff200' : '#ffa801') : '#ffdd59',
+        size: isGold ? 4.5 : 3
+      });
+    }
+  }
+
+  function addSmokePuff(x, y) {
+    for (let i = 0; i < 5; i++) {
+      smokePuffs.push({
+        x: x + (Math.random() - 0.5) * 16,
+        y: y + (Math.random() - 0.5) * 16,
+        r: 8 + Math.random() * 8,
+        alpha: 0.9,
+        vx: (Math.random() - 0.5) * 2,
+        vy: -0.8 - Math.random() * 1.5
+      });
+    }
+  }
+
+  // --- 描画関数群 ---
+  function drawSeamlessBackground(isFever) {
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    if (isFever) {
+      skyGrad.addColorStop(0, '#f39c12');
+      skyGrad.addColorStop(0.65, '#f1c40f');
+      skyGrad.addColorStop(1, '#e67e22');
+    } else {
+      skyGrad.addColorStop(0, '#5cbbf5');
+      skyGrad.addColorStop(0.65, '#cae8ff');
+      skyGrad.addColorStop(1, '#a1d4f7');
+    }
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    bgCloudsScroll = (bgCloudsScroll + speed * 0.15) % 514;
+    ctx.fillStyle = isFever ? 'rgba(255, 245, 196, 0.85)' : 'rgba(255, 255, 255, 0.75)';
+    for (let offset of [-bgCloudsScroll, 514 - bgCloudsScroll]) {
+      drawCloudCluster(offset + 65, 48, 0.8);
+      drawCloudCluster(offset + 255, 75, 0.6);
+      drawCloudCluster(offset + 415, 38, 0.9);
+    }
+
+    bgHillsScroll = (bgHillsScroll + speed * 0.3) % 514;
+    ctx.fillStyle = isFever ? '#d4ac0d' : '#83c5be';
+    for (let offset of [-bgHillsScroll, 514 - bgHillsScroll]) {
+      ctx.beginPath();
+      ctx.moveTo(offset, canvas.height);
+      ctx.lineTo(offset, GROUND_Y);
+      ctx.quadraticCurveTo(offset + 85, GROUND_Y - 58, offset + 190, GROUND_Y + 10);
+      ctx.quadraticCurveTo(offset + 310, GROUND_Y - 74, offset + 430, GROUND_Y);
+      ctx.quadraticCurveTo(offset + 470, GROUND_Y - 37, offset + 514, GROUND_Y + 10);
+      ctx.lineTo(offset + 514, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function drawCloudCluster(x, y, scale) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    ctx.beginPath();
+    ctx.arc(0, 0, 20, 0, Math.PI * 2);
+    ctx.arc(20, -10, 26, 0, Math.PI * 2);
+    ctx.arc(42, 0, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawGroundAndPits() {
+    const sortedPits = [...pits].sort((a, b) => a.x - b.x);
+    let currentX = -50;
+
+    for (let pit of sortedPits) {
+      if (pit.x > currentX) {
+        drawGroundSegment(currentX, pit.x - currentX);
+      }
+      drawCliffEdges(pit.x, pit.w);
+      currentX = Math.max(currentX, pit.x + pit.w);
+    }
+    if (currentX < canvas.width + 50) {
+      drawGroundSegment(currentX, (canvas.width + 50) - currentX);
+    }
+
+    groundScroll = (groundScroll + speed) % 24;
+    ctx.strokeStyle = '#52b788';
+    ctx.lineWidth = 2.5;
+
+    for (let x = -groundScroll - 24; x < canvas.width + 24; x += 24) {
+      const inPit = pits.some(p => x >= p.x - 4 && x <= p.x + p.w + 4);
+      if (!inPit) {
+        ctx.beginPath();
+        ctx.moveTo(x, GROUND_Y);
+        ctx.lineTo(x + 7, GROUND_Y + 6);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawGroundSegment(x, w) {
+    if (w <= 0) return;
+    ctx.fillStyle = '#40916c';
+    ctx.fillRect(x, GROUND_Y, w, canvas.height - GROUND_Y);
+    ctx.fillStyle = '#2d6a4f';
+    ctx.fillRect(x, GROUND_Y + 10, w, 4);
+    ctx.fillStyle = '#1e3f20';
+    ctx.fillRect(x, GROUND_Y + 36, w, canvas.height - (GROUND_Y + 36));
+  }
+
+  function drawCliffEdges(x, w) {
+    ctx.fillStyle = '#1e2d1f';
+    ctx.fillRect(x - 4, GROUND_Y, 4, canvas.height - GROUND_Y);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillRect(x, GROUND_Y, 8, canvas.height - GROUND_Y);
+
+    ctx.fillStyle = '#1e2d1f';
+    ctx.fillRect(x + w, GROUND_Y, 4, canvas.height - GROUND_Y);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillRect(x + w - 8, GROUND_Y, 8, canvas.height - GROUND_Y);
+  }
+
+  function drawStandingLog(log) {
+    ctx.save();
+    ctx.translate(log.x, log.y);
+    const w = log.w, h = log.h;
+
+    ctx.lineWidth = 2.2;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1b1b1b';
+
+    ctx.fillStyle = '#7a4b24';
+    ctx.beginPath();
+    ctx.moveTo(2, 6); ctx.lineTo(w - 2, 6);
+    ctx.lineTo(w + 2, h); ctx.lineTo(-2, h);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    ctx.strokeStyle = '#533116';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(7, 8); ctx.lineTo(6, h - 2);
+    ctx.moveTo(14, 10); ctx.lineTo(15, h - 4);
+    ctx.stroke();
+
+    ctx.fillStyle = '#41240e';
+    ctx.beginPath();
+    ctx.ellipse(11, h * 0.55, 2.5, 4, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#1b1b1b';
+    ctx.lineWidth = 2.2;
+    ctx.fillStyle = '#d7a15c';
+    ctx.beginPath();
+    ctx.ellipse(w / 2, 6, w / 2 - 2, 5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawPlatform(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+
+    ctx.fillStyle = '#8e542a';
+    ctx.strokeStyle = '#2d1808';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, p.w, p.h, 5);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#bf7d48';
+    ctx.fillRect(4, 2, p.w - 8, 3.5);
+
+    ctx.strokeStyle = '#4a260f';
+    ctx.lineWidth = 2;
+    for (let x = 75; x < p.w; x += 75) {
+      ctx.beginPath();
+      ctx.moveTo(x, 2);
+      ctx.lineTo(x, p.h - 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawBird(b) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+
+    const wingY = Math.sin(b.wingAnim) * 9;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#222';
+
+    ctx.fillStyle = '#2f3542';
+    ctx.beginPath();
+    ctx.moveTo(12, 2); ctx.lineTo(18, -10 + wingY); ctx.lineTo(26, 4);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#3742fa';
+    ctx.beginPath();
+    ctx.ellipse(16, 6, 12, 8, -0.1, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#70a1ff';
+    ctx.beginPath(); ctx.ellipse(17, 9, 8, 4, 0, 0, Math.PI); ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(8, 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(7.5, 4, 1.2, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#ffa502';
+    ctx.beginPath();
+    ctx.moveTo(4, 3); ctx.lineTo(-4, 6); ctx.lineTo(4, 8);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#5352ed';
+    ctx.beginPath();
+    ctx.moveTo(14, 5); ctx.lineTo(20, -12 - wingY); ctx.lineTo(24, 7);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawRedBird(b) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+
+    const breathe = Math.sin(b.breatheAnim) * 1.2;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#222';
+
+    ctx.strokeStyle = '#d35400';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(11, 14); ctx.lineTo(11, 18);
+    ctx.moveTo(17, 14); ctx.lineTo(17, 18);
+    ctx.stroke();
+
+    ctx.fillStyle = '#962d2d';
+    ctx.beginPath();
+    ctx.ellipse(16, 6, 8, 5, 0.2, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath();
+    ctx.ellipse(13, 7 + breathe * 0.3, 10, 7.5, -0.1, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#ff7979';
+    ctx.beginPath();
+    ctx.ellipse(14, 10 + breathe * 0.3, 6, 3.5, 0, 0, Math.PI);
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(6, 5 + breathe * 0.3, 2.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(5.5, 5 + breathe * 0.3, 1.2, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#f39c12';
+    ctx.beginPath();
+    ctx.moveTo(3, 4 + breathe * 0.3); ctx.lineTo(-4, 6 + breathe * 0.3); ctx.lineTo(3, 8 + breathe * 0.3);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#c0392b';
+    ctx.beginPath();
+    ctx.ellipse(15, 6 + breathe * 0.3, 7, 4.5, 0.2, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawMeat(m, floatY) {
+    ctx.save();
+    ctx.translate(m.x, floatY);
+
+    const isGold = m.isGold;
+    if (isGold) {
+      ctx.shadowColor = '#f1c40f';
+      ctx.shadowBlur = 10;
+    }
+
+    ctx.strokeStyle = isGold ? '#fff9d2' : '#ffffff';
+    ctx.lineWidth = 4.5;
+    ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(16, 0); ctx.stroke();
+
+    ctx.fillStyle = isGold ? '#fff9d2' : '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-9, -2.5, 3, 0, Math.PI * 2); ctx.arc(-9, 2.5, 3, 0, Math.PI * 2);
+    ctx.arc(16, -2.5, 3, 0, Math.PI * 2); ctx.arc(16, 2.5, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = isGold ? '#f1c40f' : '#e55039';
+    ctx.strokeStyle = isGold ? '#b7791f' : '#2c2c54';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.ellipse(3.5, 0, 10, 7.5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = isGold ? '#fff8cc' : '#ff7675';
+    ctx.beginPath();
+    ctx.ellipse(1.5, -2.5, 4.5, 2, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawBone(b, floatY) {
+    ctx.save();
+    ctx.translate(b.x, floatY);
+
+    ctx.shadowColor = '#00d2d3';
+    ctx.shadowBlur = 12;
+
+    ctx.strokeStyle = '#2c3e50';
+    ctx.lineWidth = 2;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-7, -3.5, 14, 7);
+
+    ctx.beginPath();
+    ctx.arc(-7, -4, 4.2, 0, Math.PI * 2);
+    ctx.arc(-7, 4, 4.2, 0, Math.PI * 2);
+    ctx.arc(7, -4, 4.2, 0, Math.PI * 2);
+    ctx.arc(7, 4, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-6, -3.5); ctx.lineTo(6, -3.5);
+    ctx.moveTo(-6, 3.5); ctx.lineTo(6, 3.5);
+    ctx.stroke();
+
+    ctx.fillStyle = '#f1f2f6';
+    ctx.beginPath();
+    ctx.arc(-1, -1, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawWolf(w) {
+    ctx.save();
+    ctx.translate(w.x, w.y);
+
+    let legSwing = 0;
+    let bodyBob = 0;
+
+    if (w.isFallingIntoPit) {
+      legSwing = 8;
+      ctx.rotate(0.18);
+    } else {
+      legSwing = w.isGrounded ? Math.sin(w.animFrame) * 11 : 5;
+      bodyBob = w.isGrounded ? Math.abs(Math.cos(w.animFrame)) * 3 : 0;
+    }
+
+    ctx.translate(0, -bodyBob);
+
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1b1b1b';
+
+    const colDark = '#555659';
+    const colLight = '#dec6a7';
+
+    // しっぽ
+    ctx.save();
+    ctx.translate(8, 22);
+    const tailWiggle = w.isFallingIntoPit ? 0.3 : Math.sin(w.animFrame * 1.3) * 0.14;
+    ctx.rotate(-0.15 + tailWiggle);
+    ctx.fillStyle = colDark;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(-22, -7); ctx.lineTo(-19, -2);
+    ctx.lineTo(-25, 2); ctx.lineTo(-20, 6); ctx.lineTo(-24, 11);
+    ctx.quadraticCurveTo(-9, 16, 0, 9);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // 奥足
+    ctx.fillStyle = '#404144';
+    ctx.beginPath(); ctx.roundRect(12 - legSwing * 0.6, 28, 11, 20, [3, 3, 5, 5]); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(42 + legSwing * 0.6, 28, 11, 20, [3, 3, 5, 5]); ctx.fill(); ctx.stroke();
+
+    // 胴体
+    ctx.fillStyle = colDark;
+    ctx.beginPath(); ctx.ellipse(28, 25, 23, 18, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    // 背中模様
+    ctx.fillStyle = colLight;
+    ctx.beginPath();
+    ctx.moveTo(15, 11); ctx.quadraticCurveTo(24, 9, 32, 14); ctx.lineTo(23, 21); ctx.lineTo(17, 16);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // 腹
+    ctx.beginPath(); ctx.ellipse(29, 30, 16, 7, 0, 0, Math.PI); ctx.fill(); ctx.stroke();
+
+    // 手前足
+    ctx.fillStyle = colDark;
+    ctx.beginPath(); ctx.roundRect(16 + legSwing * 0.6, 28, 12, 20, [3, 3, 5, 5]); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(46 - legSwing * 0.6, 28, 12, 20, [3, 3, 5, 5]); ctx.fill(); ctx.stroke();
+
+    // 頭部
+    ctx.save();
+    ctx.translate(38, 14);
+
+    // 耳
+    ctx.fillStyle = colDark;
+    ctx.beginPath(); ctx.moveTo(9, -16); ctx.lineTo(15, -31); ctx.lineTo(22, -12); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-3, -9); ctx.lineTo(-1, -29); ctx.lineTo(10, -11); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = colLight;
+    ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(0, -23); ctx.lineTo(7, -12); ctx.closePath(); ctx.fill();
+
+    // 頭輪郭
+    ctx.fillStyle = colDark;
+    ctx.beginPath(); ctx.ellipse(10, -4, 18, 17, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    // 顔ベージュ
+    ctx.fillStyle = colLight;
+    ctx.beginPath();
+    ctx.moveTo(-1, 0); ctx.quadraticCurveTo(7, -12, 22, -11);
+    ctx.quadraticCurveTo(34, -5, 31, 5); ctx.quadraticCurveTo(21, 13, 5, 10);
+    ctx.quadraticCurveTo(-5, 7, -1, 0);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // 鼻
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.ellipse(29, -3, 4.5, 4, 0.2, 0, Math.PI * 2); ctx.fill();
+
+    // 口
+    ctx.strokeStyle = '#1b1b1b';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath(); ctx.moveTo(12, 7); ctx.quadraticCurveTo(18, 5, 21, 8); ctx.quadraticCurveTo(25, 7, 27, 10); ctx.stroke();
+
+    // 目
+    ctx.fillStyle = '#ffffff';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.ellipse(11, -4, w.isFallingIntoPit ? 5.2 : 4, w.isFallingIntoPit ? 5.5 : 4.5, 0.1, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.restore();
+    ctx.restore();
+  }
+
+  // --- メイン更新ループ ---
+  function update() {
+    frameCount++;
+
+    if (isPlaying && !isGameOver) {
+      speed = 4.0 + Math.min(frameCount * 0.0015, 3.2);
+
+      if (feverTimer > 0) {
+        feverTimer--;
+        if (feverTimer === 0) {
+          startBGM('normal');
+        }
+      }
+
+      wolf.update();
+      handleSpawning();
+
+      const wolfBox = {
+        x: wolf.x + 14,
+        y: wolf.y + 10,
+        w: wolf.w - 26,
+        h: wolf.h - 14
+      };
+
+      // 丸太
+      for (let i = logs.length - 1; i >= 0; i--) {
+        const log = logs[i];
+        log.x -= speed;
+        if (!wolf.isFallingIntoPit && checkCollision(wolfBox, { x: log.x + 2, y: log.y + 2, w: log.w - 4, h: log.h - 2 })) {
+          gameOver();
+          break;
+        }
+        if (log.x < -40) logs.splice(i, 1);
+      }
+
+      // 青い鳥
+      if (!isGameOver) {
+        for (let i = birds.length - 1; i >= 0; i--) {
+          const b = birds[i];
+          b.x -= speed;
+          b.wingAnim += 0.3;
+          if (!wolf.isFallingIntoPit && checkCollision(wolfBox, { x: b.x + 4, y: b.y + 2, w: b.w - 8, h: b.h - 4 })) {
+            gameOver();
+            break;
+          }
+          if (b.x < -40) birds.splice(i, 1);
+        }
+      }
+
+      // 赤い鳥
+      if (!isGameOver) {
+        for (let i = redBirds.length - 1; i >= 0; i--) {
+          const rb = redBirds[i];
+          rb.x -= speed;
+          rb.breatheAnim += 0.1;
+          if (!wolf.isFallingIntoPit && checkCollision(wolfBox, { x: rb.x + 3, y: rb.y + 3, w: rb.w - 6, h: rb.h - 4 })) {
+            gameOver();
+            break;
+          }
+          if (rb.x < -40) redBirds.splice(i, 1);
+        }
+      }
+
+      // 足場
+      for (let i = platforms.length - 1; i >= 0; i--) {
+        const p = platforms[i];
+        p.x -= speed;
+        if (p.x + p.w < -40) platforms.splice(i, 1);
+      }
+
+      // 穴
+      for (let i = pits.length - 1; i >= 0; i--) {
+        const pit = pits[i];
+        pit.x -= speed;
+        if (pit.x + pit.w < -40) pits.splice(i, 1);
+      }
+
+      // お肉
+      for (let i = meats.length - 1; i >= 0; i--) {
+        const m = meats[i];
+        m.x -= speed;
+        const floatY = m.baseY + Math.sin(frameCount * 0.08 + m.bobOffset) * 3.5;
+        const meatBox = { x: m.x - 10, y: floatY - 8, w: 20, h: 16 };
+
+        if (!wolf.isFallingIntoPit && checkCollision(wolfBox, meatBox)) {
+          if (m.isGold) {
+            totalScore += 3; meatCount++;
+            playSound('gold_meat');
+            addSparks(m.x, floatY, true);
+          } else {
+            totalScore += 1; meatCount++;
+            playSound('meat');
+            addSparks(m.x, floatY, false);
+          }
+          meats.splice(i, 1);
+          continue;
+        }
+        if (m.x < -30) meats.splice(i, 1);
+      }
+
+      // 骨
+      for (let i = bones.length - 1; i >= 0; i--) {
+        const b = bones[i];
+        b.x -= speed;
+        const floatY = b.baseY + Math.sin(frameCount * 0.08 + b.bobOffset) * 3.5;
+        const boneBox = { x: b.x - 12, y: floatY - 8, w: 24, h: 16 };
+
+        if (!wolf.isFallingIntoPit && checkCollision(wolfBox, boneBox)) {
+          feverTimer = FEVER_MAX_TIME;
+          playSound('bone_fever');
+          addSmokePuff(b.x, floatY);
+          addSparks(b.x, floatY, true);
+          triggerFeverBurst();
+          startBGM('fever');
+          bones.splice(i, 1);
+          continue;
+        }
+        if (b.x < -30) bones.splice(i, 1);
+      }
+
+      // パーティクル
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.alpha -= 0.04;
+        if (p.alpha <= 0) particles.splice(i, 1);
+      }
+
+      // 煙パフ
+      for (let i = smokePuffs.length - 1; i >= 0; i--) {
+        const sp = smokePuffs[i];
+        sp.x += sp.vx - speed * 0.4;
+        sp.y += sp.vy;
+        sp.r += 0.4;
+        sp.alpha -= 0.035;
+        if (sp.alpha <= 0) smokePuffs.splice(i, 1);
+      }
+    } else if (!isPlaying) {
+      wolf.animFrame += 0.2;
+    }
+
+    // --- 描画処理 ---
+    const isFever = feverTimer > 0;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawSeamlessBackground(isFever);
+
+    drawGroundAndPits();
+    platforms.forEach(p => drawPlatform(p));
+    logs.forEach(l => drawStandingLog(l));
+    birds.forEach(b => drawBird(b));
+    redBirds.forEach(rb => drawRedBird(rb));
+
+    meats.forEach(m => {
+      const floatY = m.baseY + Math.sin(frameCount * 0.08 + m.bobOffset) * 3.5;
+      drawMeat(m, floatY);
+    });
+    bones.forEach(b => {
+      const floatY = b.baseY + Math.sin(frameCount * 0.08 + b.bobOffset) * 3.5;
+      drawBone(b, floatY);
+    });
+
+    smokePuffs.forEach(sp => {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, sp.alpha);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    particles.forEach(p => {
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    drawWolf(wolf);
+
+    if (isPlaying) {
+      drawScoreUI(isFever);
+    }
+
+    requestAnimationFrame(update);
+  }
+
+  function drawScoreUI(isFever) {
+    ctx.save();
+    ctx.fillStyle = isFever ? 'rgba(243, 156, 18, 0.85)' : 'rgba(0, 0, 0, 0.45)';
+    ctx.beginPath();
+    ctx.roundRect(14, 12, 145, 36, 18);
+    ctx.fill();
+
+    drawMeat({ x: 30, isGold: false }, 30);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(`${totalScore} 点 (${meatCount}個)`, 50, 36);
+
+    if (isFever) {
+      const feverSec = (feverTimer / 60).toFixed(1);
+      ctx.fillStyle = 'rgba(231, 76, 60, 0.85)';
+      ctx.beginPath();
+      ctx.roundRect(canvas.width - 150, 12, 138, 36, 18);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`🔥 FEVER ${feverSec}s`, canvas.width - 81, 35);
+    }
+    ctx.restore();
+  }
+
+  function checkCollision(r1, r2) {
+    return (
+      r1.x < r2.x + r2.w &&
+      r1.x + r1.w > r2.x &&
+      r1.y < r2.y + r2.h &&
+      r1.y + r1.h > r2.y
+    );
+  }
+
+  function gameOver() {
+    if (isGameOver) return;
+    isGameOver = true;
+    stopBGM();
+    playSound('hit');
+
+    finalScoreSpan.textContent = totalScore;
+
+    const list = getRanking();
+    list.push({ name: currentPlayerName, score: totalScore });
+    list.sort((a, b) => b.score - a.score);
+    const top10 = list.slice(0, 10);
+    saveRanking(top10);
+
+    const myRank = top10.findIndex(e => e.name === currentPlayerName && e.score === totalScore);
+    if (myRank !== -1) {
+      rankAnnounce.textContent = `🎉 全国第 ${myRank + 1} 位にランクイン！`;
+    } else {
+      rankAnnounce.textContent = `惜しい！TOP10ランク外でした。`;
+    }
+
+    renderRanking(currentPlayerName, totalScore);
+    goModal.style.display = 'flex';
+  }
+
+  function startGame() {
+    initAudio();
+    currentPlayerName = playerNameInput.value.trim() || "名無しの狼";
+    try {
+      localStorage.setItem('wolf_player_name', currentPlayerName);
+    } catch(e) {}
+    nameModal.style.display = 'none';
+    isPlaying = true;
+    restart();
+  }
+
+  function restart() {
+    logs = [];
+    birds = [];
+    redBirds = [];
+    platforms = [];
+    pits = [];
+    meats = [];
+    bones = [];
+    particles = [];
+    smokePuffs = [];
+    totalScore = 0;
+    meatCount = 0;
+    speed = 4.0;
+    frameCount = 0;
+    nextSpawnDistance = 120;
+    lastSpawnType = 'none';
+    consecutiveLogCount = 0;
+    feverTimer = 0;
+    isGameOver = false;
+    isPlaying = true;
+    wolf.reset();
+    goModal.style.display = 'none';
+    startBGM('normal');
+  }
+
+  // --- イベント登録 ---
+  btnStart.addEventListener('click', startGame);
+  btnStart.addEventListener('touchstart', (e) => { e.preventDefault(); startGame(); });
+
+  btnRestart.addEventListener('click', restart);
+  btnRestart.addEventListener('touchstart', (e) => { e.preventDefault(); restart(); });
+
+  btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); wolf.jump(); });
+  btnJump.addEventListener('mousedown', () => wolf.jump());
+
+  btnDive.addEventListener('touchstart', (e) => { e.preventDefault(); wolf.dive(); });
+  btnDive.addEventListener('mousedown', () => wolf.dive());
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') {
+      wolf.jump();
+      e.preventDefault();
+    } else if (e.code === 'ArrowDown') {
+      wolf.dive();
+      e.preventDefault();
+    }
+  });
+
+  renderRanking();
+  requestAnimationFrame(update);
+})();
+</script>
+</body>
+</html>
